@@ -204,6 +204,9 @@ class AddScript extends React.Component {
                                                                             });
                                                                             console.log('submission', scriptVariableInput);
                                                                             store.set('key', key);
+                                                                            //this.forceUpdate();
+                                                                          //  window.location.reload();
+
                                                                             // var showSuccess = data && data.scriptTagUpdate.scriptTag.id && (
                                                                             //     <Banner status="success">Age Verification Script Updated Successfully</Banner>
                                                                             //     );
