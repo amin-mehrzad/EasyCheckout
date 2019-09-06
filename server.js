@@ -9,7 +9,7 @@ const session = require('koa-session');
 dotenv.config();
 const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy');
 const Router = require('koa-router');
-const {receiveWebhook, registerWebhook} = require('@shopify/koa-shopify-webhooks');
+const { receiveWebhook, registerWebhook } = require('@shopify/koa-shopify-webhooks');
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
 const getSubscriptionUrl = require('./server/getSubscriptionUrl');
 
@@ -31,47 +31,46 @@ app.prepare().then(() => {
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
       secret: SHOPIFY_API_SECRET_KEY,
-      scopes: ['read_products', 'write_products','read_script_tags','write_script_tags'],
-      //afterAuth(ctx) {
-        async afterAuth(ctx) {
-          const { shop, accessToken } = ctx.session;
+      scopes: ['read_themes','write_themes','read_products', 'write_products', 'read_script_tags', 'write_script_tags', 'read_checkouts', 'write_checkouts', 'read_orders', 'write_orders'],
+      async afterAuth(ctx) {
+        const { shop, accessToken } = ctx.session;
         ctx.cookies.set("shopOrigin", shop, { httpOnly: false });
 
         const registration = await registerWebhook({
-          address: `${HOST}/webhooks/products/create`,
-          topic: 'PRODUCTS_CREATE',
+         // address: `${HOST}/webhooks/products/create`,
+          address: `${HOST}/webhooks/checkouts/create`,
+          topic: 'CHECKOUTS_CREATE',
           accessToken,
           shop,
         });
-     
+
         if (registration.success) {
           console.log('Successfully registered webhook!');
         } else {
           console.log('Failed to register webhook', registration.result);
         }
 
-       // ctx.redirect('/');
-       // ctx.redirect('/');
+
         await getSubscriptionUrl(ctx, accessToken, shop);
       },
     }),
   );
 
 
-  const webhook = receiveWebhook({secret: SHOPIFY_API_SECRET_KEY});
+  const webhook = receiveWebhook({ secret: SHOPIFY_API_SECRET_KEY });
 
- router.post('/webhooks/products/create', webhook, (ctx) => {
-   console.log('received webhook: ', ctx.state.webhook);
- });
+  router.post('/webhooks/checkouts/create', webhook, (ctx) => {
+    console.log('received webhook: ', ctx.state.webhook);
+  });
 
   server.use(graphQLProxy({ version: ApiVersion.April19 }));
   router.get('*', verifyRequest(), async (ctx) => {
     await handle(ctx.req, ctx.res);
     ctx.respond = false;
     ctx.res.statusCode = 200;
-   });
-   server.use(router.allowedMethods());
-   server.use(router.routes());
+  });
+  server.use(router.allowedMethods());
+  server.use(router.routes());
 
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
